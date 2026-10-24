@@ -95,5 +95,9 @@ if [[ " $TARGETS " == *" forge "* ]]; then
   c_ok "Forge Neo installed"
 fi
 
+# Download cache is ~15 GB once everything is installed: free the rented disk
+c_info "Cleaning the download cache"
+uv cache clean || true
+
 dgs_password >/dev/null
 c_ok "Done in $(( ($(date +%s) - START) / 60 )) min. Start with:  bash start.sh"

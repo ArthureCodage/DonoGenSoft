@@ -51,7 +51,10 @@ dgs_password() {
   fi
   if [ ! -s "$f" ]; then
     mkdir -p "$DGS_DATA"
-    tr -dc 'A-Za-z0-9' </dev/urandom | head -c 16 >"$f"
+    # finite input: avoids a SIGPIPE that would stop scripts using pipefail
+    local p
+    p="$(head -c 512 /dev/urandom | tr -dc 'A-Za-z0-9')"
+    printf '%s' "${p:0:16}" >"$f"
     chmod 600 "$f"
   fi
   cat "$f"

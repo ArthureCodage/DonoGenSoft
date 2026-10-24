@@ -105,7 +105,7 @@ aria2c -x 16 -s 16 "<lien direct .safetensors>"
   `install.sh` installe automatiquement un torch compatible pour Forge. kohya_ss demande **≥ 12.8**.
 - **Image** : n'importe quelle image Ubuntu avec les drivers NVIDIA, par ex.
   `vastai/base-image:cuda-12.8.1-auto` ou un template PyTorch RunPod. Python n'a pas besoin d'être installé.
-- **Disque** : 60 Go minimum (les deux environnements ≈ 20 Go + modèles), 100 Go pour Flux.
+- **Disque** : 60 Go minimum (les deux environnements ≈ 18 Go une fois installés, pic à ~35 Go pendant l'installation, + modèles), 100 Go pour Flux.
 - **Durée d'installation** : environ 10–15 min selon le débit de l'instance.
 
 ---
@@ -129,3 +129,4 @@ DonoGenSoft/
 ## Journal
 
 - 2026-10-24 — Création : kohya_ss v26.0.0 + Forge Neo (`neo` @ 0c388f8), scripts install/start/stop/update/bootstrap.
+- 2026-10-24 — Testé dans un conteneur Ubuntu 24.04 + RTX 2060 (pilote CUDA 13.4) : installation complète, les deux interfaces démarrent et s'arrêtent. Corrigés : détection « CUDA UMD Version », plantage du mot de passe (SIGPIPE), cache uv (~16 Go) vidé en fin d'installation.
