@@ -1,0 +1,4 @@
+# Runtime data (models, LoRAs, datasets, caches, password)
+/data/
+/logs/
+/.uv/
