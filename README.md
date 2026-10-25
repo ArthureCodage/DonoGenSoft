@@ -1,16 +1,19 @@
 # DonoGenSoft
 
-**kohya_ss** (entraînement de LoRA) + **Stable Diffusion WebUI Forge Neo** (génération d'images),
-installés ensemble en une commande sur une instance GPU louée (vast.ai, RunPod…).
+**kohya_ss** (entraînement de LoRA) + **LoRA Creator** (interface simplifiée pour kohya) +
+**Stable Diffusion WebUI Forge Neo** (génération d'images), installés ensemble en une commande
+sur une instance GPU louée (vast.ai, RunPod…).
 
 | Outil | Source | Version | Port |
 |---|---|---|---|
 | Forge Neo | [Haoming02/sd-webui-forge-classic](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo) (branche `neo`) | Python 3.13, torch cu130 | **7860** |
 | kohya_ss | [bmaltais/kohya_ss](https://github.com/bmaltais/kohya_ss) | v26.0.0, Python 3.11, torch cu128 | **7861** |
+| LoRA Creator | [ArthureCodage/lora-creator](https://github.com/ArthureCodage/lora-creator) | utilise le Python de kohya_ss | **7870** |
 
-Les deux projets sont inclus comme *sous-modules git* : leurs versions sont figées dans ce repo,
-donc chaque instance installe exactement la même chose. Chacun a son propre environnement Python
-(installé avec [uv](https://github.com/astral-sh/uv), beaucoup plus rapide que pip).
+Les trois projets sont inclus comme *sous-modules git* : leurs versions sont figées dans ce repo,
+donc chaque instance installe exactement la même chose. Forge et kohya ont chacun leur propre
+environnement Python (installé avec [uv](https://github.com/astral-sh/uv), beaucoup plus rapide que pip) ;
+LoRA Creator tourne sur celui de kohya_ss, déjà configuré avec les dossiers de ce repo.
 
 ---
 
@@ -26,7 +29,7 @@ bash install.sh
 bash start.sh
 ```
 
-`start.sh` affiche l'identifiant (`dono`) et le mot de passe des deux interfaces.
+`start.sh` affiche l'identifiant (`dono`) et le mot de passe des trois interfaces.
 Le mot de passe est créé au premier lancement et gardé dans `data/password.txt`.
 
 ### Encore plus simple : tout automatique au démarrage
@@ -37,7 +40,7 @@ Dans le champ **On-start script** (vast.ai) ou **Container Start Command** (RunP
 curl -fsSL https://raw.githubusercontent.com/ArthureCodage/DonoGenSoft/main/bootstrap.sh | bash
 ```
 
-Il clone le repo dans `/workspace/DonoGenSoft`, installe si ce n'est pas déjà fait, puis lance les deux interfaces.
+Il clone le repo dans `/workspace/DonoGenSoft`, installe si ce n'est pas déjà fait, puis lance les trois interfaces.
 Au redémarrage d'une instance déjà installée, il relance directement.
 
 ---
@@ -46,14 +49,14 @@ Au redémarrage d'une instance déjà installée, il relance directement.
 
 | Commande | Effet |
 |---|---|
-| `bash install.sh` | Installe les deux (`install.sh forge` ou `install.sh kohya` pour un seul) |
-| `bash start.sh` | Lance les deux en arrière-plan (`start.sh forge` / `start.sh kohya`) |
-| `bash stop.sh` | Arrête (`stop.sh forge` / `stop.sh kohya`) |
+| `bash install.sh` | Installe tout (`install.sh forge`, `install.sh kohya` ou `install.sh lora` pour un seul ; `lora` installe aussi kohya) |
+| `bash start.sh` | Lance tout en arrière-plan (`start.sh forge` / `kohya` / `lora`) |
+| `bash stop.sh` | Arrête (`stop.sh forge` / `kohya` / `lora`) |
 | `bash update.sh` | Récupère la dernière version de ce repo et réinstalle si besoin |
-| `bash update.sh --latest` | Passe en plus kohya_ss et Forge Neo à leur toute dernière version |
-| `tail -f logs/forge.log logs/kohya.log` | Suivre ce qui se passe |
+| `bash update.sh --latest` | Passe en plus kohya_ss, Forge Neo et LoRA Creator à leur toute dernière version |
+| `tail -f logs/*.log` | Suivre ce qui se passe |
 
-Variables utiles : `FORGE_PORT`, `KOHYA_PORT`, `DGS_PASSWORD` (mot de passe imposé),
+Variables utiles : `FORGE_PORT`, `KOHYA_PORT`, `LC_PORT`, `DGS_PASSWORD` (mot de passe imposé),
 `FORGE_ARGS` / `KOHYA_ARGS` (options en plus, ex. `FORGE_ARGS="--sage" bash start.sh forge`).
 
 ---
@@ -63,17 +66,18 @@ Variables utiles : `FORGE_PORT`, `KOHYA_PORT`, `DGS_PASSWORD` (mot de passe impo
 **Option 1 — tunnel SSH (le plus sûr, marche partout).** Depuis le PC :
 
 ```bash
-ssh -p <port-ssh> root@<ip> -L 7860:localhost:7860 -L 7861:localhost:7861
+ssh -p <port-ssh> root@<ip> -L 7860:localhost:7860 -L 7861:localhost:7861 -L 7870:localhost:7870
 ```
 
-puis ouvrir http://localhost:7860 (Forge) et http://localhost:7861 (kohya).
+puis ouvrir http://localhost:7860 (Forge), http://localhost:7861 (kohya) et http://localhost:7870 (LoRA Creator).
 
 **Option 2 — ports ouverts.**
-- *vast.ai* : dans le template, ajouter `-p 7860:7860 -p 7861:7861` aux options Docker ;
+- *vast.ai* : dans le template, ajouter `-p 7860:7860 -p 7861:7861 -p 7870:7870` aux options Docker ;
   l'adresse publique de chaque port est dans *Instances → IP & ports*.
-- *RunPod* : dans le template, ajouter `7860,7861` aux *HTTP ports* ; les liens apparaissent dans *Connect*.
+- *RunPod* : dans le template, ajouter `7860,7861,7870` aux *HTTP ports* ; les liens apparaissent dans *Connect*.
 
-Les interfaces sont protégées par l'identifiant/mot de passe affiché par `start.sh`.
+Les trois interfaces sont protégées par l'identifiant/mot de passe affiché par `start.sh`
+(LoRA Creator n'a pas de connexion à lui : DonoGenSoft l'ajoute, le navigateur affiche une fenêtre de connexion).
 
 ---
 
@@ -84,9 +88,15 @@ Les interfaces sont protégées par l'identifiant/mot de passe affiché par `sta
 | `data/models/checkpoints` | Modèles de base (`.safetensors`) — visibles dans Forge, à indiquer dans kohya |
 | `data/loras` | LoRA : mettre ici le dossier de sortie de kohya, ils apparaissent directement dans Forge |
 | `data/datasets` | Images d'entraînement |
+| `data/lora-creator` | LoRA Creator : ses datasets, entraînements (`runs/`), LoRA produits, `config.json` |
 | `data/hf-cache` | Téléchargements Hugging Face + config `accelerate` |
 
 Forge garde aussi ses dossiers habituels (`forge-neo/models/...`).
+
+**LoRA Creator** est réglé automatiquement : il entraîne avec le kohya_ss de ce repo, propose les modèles
+de `data/models/checkpoints` et `forge-neo/models/Stable-diffusion`, et copie chaque LoRA fini dans
+`data/loras`, donc directement visible dans Forge. Sa config (`data/lora-creator/config.json`) est
+réécrite à chaque `start.sh`.
 Tout est dans `/workspace`, donc conservé si l'instance est arrêtée puis relancée.
 
 Télécharger un modèle directement sur l'instance (bien plus rapide que de l'envoyer depuis le PC) :
@@ -119,8 +129,10 @@ DonoGenSoft/
 ├── stop.sh         arrêt
 ├── update.sh       mise à jour
 ├── bootstrap.sh    clone + install + start, pour le script de démarrage de l'instance
-├── scripts/env.sh  réglages communs (ports, dossiers, uv)
+├── scripts/env.sh  réglages communs (ports, dossiers, uv, config LoRA Creator)
+├── scripts/lora_creator_serve.py  lance LoRA Creator avec connexion obligatoire
 ├── kohya_ss/       sous-module bmaltais/kohya_ss
+├── lora-creator/   sous-module ArthureCodage/lora-creator
 └── forge-neo/      sous-module Haoming02/sd-webui-forge-classic (neo)
 ```
 
@@ -130,3 +142,4 @@ DonoGenSoft/
 
 - 2026-10-24 — Création : kohya_ss v26.0.0 + Forge Neo (`neo` @ 0c388f8), scripts install/start/stop/update/bootstrap.
 - 2026-10-24 — Testé dans un conteneur Ubuntu 24.04 + RTX 2060 (pilote CUDA 13.4) : installation complète, les deux interfaces démarrent et s'arrêtent. Corrigés : détection « CUDA UMD Version », plantage du mot de passe (SIGPIPE), cache uv (~16 Go) vidé en fin d'installation.
+- 2026-10-25 — Ajout de LoRA Creator (sous-module, port 7870) derrière une connexion. Testé dans Docker + RTX 2060 : install `lora` (5 min), connexion refusée sans mot de passe, légendes auto WD14 OK via kohya.
