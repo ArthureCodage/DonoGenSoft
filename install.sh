@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Install Forge Neo + kohya_ss on a fresh Linux GPU instance (vast.ai, RunPod...).
-#   bash install.sh          -> both
+#   bash install.sh          -> all three
 #   bash install.sh forge    -> Stable Diffusion Forge Neo only
 #   bash install.sh kohya    -> kohya_ss only
+#   bash install.sh lora     -> LoRA Creator (+ kohya_ss, which it runs on)
 set -euo pipefail
 source "$(dirname -- "${BASH_SOURCE[0]}")/scripts/env.sh"
 cd "$DGS_ROOT"
@@ -10,6 +11,8 @@ mkdir -p "$DGS_LOGS"
 exec > >(tee -a "$DGS_LOGS/install.log") 2>&1
 
 TARGETS="$(dgs_targets "${1:-all}")"
+# LoRA Creator runs on kohya_ss's Python
+if [[ " $TARGETS " == *" lora "* && " $TARGETS " != *" kohya "* ]]; then TARGETS="kohya $TARGETS"; fi
 START=$(date +%s)
 
 SUDO=""
@@ -39,7 +42,7 @@ fi
 uv --version
 
 # ---------------------------------------------------------------- sources
-c_info "Fetching kohya_ss + Forge Neo sources (git submodules)"
+c_info "Fetching kohya_ss + Forge Neo + LoRA Creator sources (git submodules)"
 git submodule sync --recursive
 git submodule update --init --recursive
 
@@ -69,6 +72,17 @@ if [[ " $TARGETS " == *" kohya "* ]]; then
     uv run --no-sync accelerate config default
   )
   c_ok "kohya_ss installed"
+fi
+
+# ---------------------------------------------------------------- LoRA Creator
+if [[ " $TARGETS " == *" lora "* ]]; then
+  c_info "Setting up LoRA Creator (uses kohya_ss's Python)"
+  dgs_lora_creator_config
+  KPY="$DGS_ROOT/kohya_ss/.venv/bin/python"
+  if ! "$KPY" -c "import fastapi, uvicorn, toml, PIL, importlib.util as u; assert u.find_spec('python_multipart') or u.find_spec('multipart')" 2>/dev/null; then
+    uv pip install --python "$KPY" fastapi uvicorn toml pillow python-multipart
+  fi
+  c_ok "LoRA Creator ready"
 fi
 
 # ---------------------------------------------------------------- Forge Neo

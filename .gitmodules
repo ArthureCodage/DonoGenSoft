@@ -6,3 +6,7 @@
 	path = forge-neo
 	url = https://github.com/Haoming02/sd-webui-forge-classic.git
 	branch = neo
+[submodule "lora-creator"]
+	path = lora-creator
+	url = https://github.com/ArthureCodage/lora-creator.git
+	branch = main

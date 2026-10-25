@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop the web UIs.   bash stop.sh [all|forge|kohya]
+# Stop the web UIs.   bash stop.sh [all|forge|kohya|lora]
 set -uo pipefail
 source "$(dirname -- "${BASH_SOURCE[0]}")/scripts/env.sh"
 

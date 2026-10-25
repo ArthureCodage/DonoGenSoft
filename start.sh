@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Start the web UIs in the background (logs in logs/).
-#   bash start.sh            -> both
+#   bash start.sh            -> all three
 #   bash start.sh forge      -> Forge Neo only  (port 7860)
 #   bash start.sh kohya      -> kohya_ss only   (port 7861)
+#   bash start.sh lora       -> LoRA Creator    (port 7870)
 set -euo pipefail
 source "$(dirname -- "${BASH_SOURCE[0]}")/scripts/env.sh"
 cd "$DGS_ROOT"
@@ -55,12 +56,26 @@ if [[ " $TARGETS " == *" kohya "* ]]; then
   fi
 fi
 
+if [[ " $TARGETS " == *" lora "* ]]; then
+  if running lora; then
+    c_warn "LoRA Creator already running"
+  elif [ ! -x kohya_ss/.venv/bin/python ] || [ ! -f lora-creator/app/server.py ]; then
+    c_err "LoRA Creator is not installed: bash install.sh lora"
+  else
+    dgs_lora_creator_config
+    DGS_PASS="$PASS" nohup setsid kohya_ss/.venv/bin/python scripts/lora_creator_serve.py lora-creator >"$DGS_LOGS/lora.log" 2>&1 &
+    echo $! >"$DGS_LOGS/lora.pid"
+    c_ok "LoRA Creator starting on port $LC_PORT  (log: logs/lora.log)"
+  fi
+fi
+
 echo
 echo "  Login:     $DGS_USER / $PASS"
 echo "  Forge Neo: http://<instance-ip>:$FORGE_PORT"
 echo "  kohya_ss:  http://<instance-ip>:$KOHYA_PORT"
+echo "  LoRA Creator: http://<instance-ip>:$LC_PORT"
 echo "  Or through SSH from your PC:"
-echo "    ssh -p <ssh-port> root@<ip> -L $FORGE_PORT:localhost:$FORGE_PORT -L $KOHYA_PORT:localhost:$KOHYA_PORT"
-echo "    then open http://localhost:$FORGE_PORT and http://localhost:$KOHYA_PORT"
+echo "    ssh -p <ssh-port> root@<ip> -L $FORGE_PORT:localhost:$FORGE_PORT -L $KOHYA_PORT:localhost:$KOHYA_PORT -L $LC_PORT:localhost:$LC_PORT"
+echo "    then open http://localhost:$FORGE_PORT, :$KOHYA_PORT and :$LC_PORT"
 echo
-echo "  Follow logs: tail -f logs/forge.log logs/kohya.log      Stop: bash stop.sh"
+echo "  Follow logs: tail -f logs/*.log      Stop: bash stop.sh"
