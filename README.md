@@ -1,4 +1,42 @@
+<div align="center">
+
 # DonoGenSoft
+
+**Entraîne des LoRA et génère des images sur un GPU loué, avec une seule commande.**
+
+kohya_ss + LoRA Creator + Stable Diffusion Forge Neo, prêts en ~15 min sur vast.ai ou RunPod.
+
+![vast.ai](https://img.shields.io/badge/vast.ai-compatible-1f6feb)
+![RunPod](https://img.shields.io/badge/RunPod-compatible-673ab7)
+![kohya_ss](https://img.shields.io/badge/kohya__ss-v26-8b7cf6)
+![Forge Neo](https://img.shields.io/badge/Forge-Neo-f97316)
+![CUDA](https://img.shields.io/badge/CUDA-12.8%2B-76B900?logo=nvidia&logoColor=white)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ArthureCodage/DonoGenSoft/main/bootstrap.sh | bash
+```
+
+</div>
+
+<details>
+<summary><b>🇬🇧 English summary</b></summary>
+
+DonoGenSoft installs **kohya_ss** (LoRA training), **[LoRA Creator](https://github.com/ArthureCodage/lora-creator)**
+(a simple UI on top of kohya) and **Stable Diffusion WebUI Forge Neo** (image generation) together, with one command,
+on a rented GPU instance (vast.ai, RunPod…).
+
+- Paste the `curl … | bash` line above in the **On-start script** (vast.ai) or **Container Start Command** (RunPod):
+  it clones, installs (~10–15 min) and starts everything. Restarts are instant.
+- Forge on port **7860**, kohya_ss on **7861**, LoRA Creator on **7870**, all behind a login (user `dono`, password printed by `start.sh`).
+- Shared folders: LoRAs trained in kohya / LoRA Creator show up directly in Forge.
+- Versions are pinned with git submodules, so every instance installs exactly the same thing. Environments built with `uv`.
+- Manual install: `git clone --recursive https://github.com/ArthureCodage/DonoGenSoft.git && cd DonoGenSoft && bash install.sh && bash start.sh`
+
+Recommended instance: RTX 3090 / 4090 / 5090, driver CUDA ≥ 12.8 (13.0 ideal), 60 GB disk minimum.
+
+</details>
+
+---
 
 **kohya_ss** (entraînement de LoRA) + **LoRA Creator** (interface simplifiée pour kohya) +
 **Stable Diffusion WebUI Forge Neo** (génération d'images), installés ensemble en une commande
